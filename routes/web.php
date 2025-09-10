@@ -14,5 +14,21 @@
 */
 
 $router->get('/', function () use ($router) {
-    return $router->app->version();
+    return 'ENTIGI System 1.0';
+});
+
+$router->post('auth/register', 'AuthController@register');
+$router->post('auth/login', 'AuthController@login');
+
+$router->group(['middleware' => 'auth.jwt'], function () use ($router) {
+    $router->get('auth/me', 'AuthController@me');
+
+    $router->get('divisi/index', 'DivisiController@index');
+    $router->post('divisi/store', 'DivisiController@store');
+    
+    $router->get('jenis-dokumen/index', 'JenisDokumenController@index');
+    $router->post('jenis-dokumen/store', 'JenisDokumenController@store');
+
+    $router->get('tujuan-tanda-tangan/index', 'TujuanTandaTanganController@index');
+    $router->post('tujuan-tanda-tangan/store', 'TujuanTandaTanganController@store');
 });

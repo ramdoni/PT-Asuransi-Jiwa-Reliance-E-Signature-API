@@ -23,9 +23,10 @@ $app = new Laravel\Lumen\Application(
     dirname(__DIR__)
 );
 
-// $app->withFacades();
+$app->withFacades();
+$app->withEloquent();
 
-// $app->withEloquent();
+$app->register(Illuminate\Validation\ValidationServiceProvider::class);
 
 /*
 |--------------------------------------------------------------------------
@@ -39,6 +40,7 @@ $app = new Laravel\Lumen\Application(
 */
 
 $app->register(Flipbox\LumenGenerator\LumenGeneratorServiceProvider::class);
+$app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
 
 $app->singleton(
     Illuminate\Contracts\Debug\ExceptionHandler::class,
@@ -62,7 +64,8 @@ $app->singleton(
 */
 
 $app->configure('app');
-
+$app->configure('auth');
+$app->configure('jwt');
 /*
 |--------------------------------------------------------------------------
 | Register Middleware
@@ -78,9 +81,10 @@ $app->configure('app');
 //     App\Http\Middleware\ExampleMiddleware::class
 // ]);
 
-// $app->routeMiddleware([
+$app->routeMiddleware([
+    'auth.jwt' => App\Http\Middleware\JwtMiddleware::class,
 //     'auth' => App\Http\Middleware\Authenticate::class,
-// ]);
+]);
 
 /*
 |--------------------------------------------------------------------------
