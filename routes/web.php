@@ -31,4 +31,10 @@ $router->group(['middleware' => 'auth.jwt'], function () use ($router) {
 
     $router->get('tujuan-tanda-tangan/index', 'TujuanTandaTanganController@index');
     $router->post('tujuan-tanda-tangan/store', 'TujuanTandaTanganController@store');
+
+    $router->get('signatory/index', 'SignatoryController@index');
+    $router->post('signatory/store', 'SignatoryController@store');
+
+    $router->get('submission/index', 'SubmissionController@index');
+    $router->post('submission/store', 'SubmissionController@store');
 });
