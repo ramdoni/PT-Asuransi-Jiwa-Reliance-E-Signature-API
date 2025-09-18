@@ -36,7 +36,7 @@ class AuthController extends Controller
             return response()->json(['error' => 'Invalid Credentials'], 401);
         }
 
-        return response()->json(compact('token'));
+        return response()->json(compact('token',auth()->user()));
     }
 
     public function me()
