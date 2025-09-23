@@ -35,6 +35,10 @@ class Authenticate
      */
     public function handle($request, Closure $next, $guard = null)
     {
+        if ($request->getMethod() === 'OPTIONS') {
+            return response('', 200);
+        }
+
         if ($this->auth->guard($guard)->guest()) {
             return response('Unauthorized.', 401);
         }
