@@ -17,11 +17,12 @@ $router->get('/', function () use ($router) {
     return 'ENTIGI System 1.0';
 });
 
-$router->post('auth/register', 'AuthController@register');
 $router->post('auth/login', 'AuthController@login');
 
 $router->group(['middleware' => 'auth.jwt'], function () use ($router) {
+    $router->post('auth/register', 'AuthController@register');
     $router->get('auth/me', 'AuthController@me');
+    $router->get('auth/index', 'AuthController@index');
 
     $router->get('divisi/index', 'DivisiController@index');
     $router->post('divisi/store', 'DivisiController@store');

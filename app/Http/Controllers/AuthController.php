@@ -6,9 +6,17 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Carbon\Carbon;
 
 class AuthController extends Controller
 {
+    public function index()
+    {
+        $data = User::orderBy('id','DESC')->paginate();
+
+        return response()->json(['data'=>$data]);
+    }
+
     public function register(Request $request)
     {
         $this->validate($request, [
@@ -36,7 +44,26 @@ class AuthController extends Controller
             return response()->json(['error' => 'Invalid Credentials'], 401);
         }
 
-        return response()->json(compact('token',auth()->user()));
+        // Ambil user yang sedang login
+        $user = auth()->user();
+
+        $expiresInMinutes = auth('api')->factory()->getTTL(); // TTL = waktu hidup token (menit)
+        $expiredAt = Carbon::now()->addMinutes($expiresInMinutes)->toISOString(); // format ISO8601
+
+        return response()->json([
+            'token' => $token,
+            'token_expired_at' => $expiredAt, 
+            'expires_in' => $expiresInMinutes * 60,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                // kalau kamu punya kolom tambahan bisa sertakan di sini
+                'phone' => $user->phone ?? null,
+                'alamat' => $user->alamat ?? null,
+                'position' => $user->position ?? null,
+            ]
+        ]);
     }
 
     public function me()

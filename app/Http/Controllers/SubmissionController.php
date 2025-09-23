@@ -33,7 +33,7 @@ class SubmissionController extends Controller
             'tanggal_diterima' => 'required',
             'no_dokumen' => 'required',
             'tujuan_tanda_tangan_id' => 'required',
-            'signatory_id' => 'required',
+            // 'signatory_id' => 'required',
             'jenis_tanda_tangan' => 'required',
             'dokumen' => 'required|file|mimes:jpeg,png,pdf|max:10048',
             'catatan' => 'required'
