@@ -1,4 +1,5 @@
 <?php
+use Illuminate\Http\Request;
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
@@ -12,6 +13,14 @@
 | and give it the Closure to call when that URI is requested.
 |
 */
+
+$router->options('{any:.*}', function (Request $request) {
+    return response('', 200)
+        ->header('Access-Control-Allow-Origin', env('FRONTEND_URL'))
+        ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+        ->header('Access-Control-Allow-Credentials', 'true');
+});
 
 $router->get('/', function () use ($router) {
     return 'ENTIGI System 1.0';
@@ -38,4 +47,5 @@ $router->group(['middleware' => 'auth.jwt'], function () use ($router) {
 
     $router->get('submission/index', 'SubmissionController@index');
     $router->post('submission/store', 'SubmissionController@store');
+    $router->delete('submission/{id}/delete', 'SubmissionController@delete');
 });

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Submission;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage; // For file storage
 
 class SubmissionController extends Controller
@@ -11,12 +13,22 @@ class SubmissionController extends Controller
 
     public function index()
     {
-        $data = Submission::orderBy('id','DESC')->paginate(100);
+        $data = Submission::selectRaw("submissions.*, DATE_FORMAT(submissions.created_at, '%d-%m-%Y') as submitted_at,jenis_dokuments.name as jenis_dokumen_name,divisi.name as devisi_name,tujuan_tanda_tangans.name as tujuan_tanda_tangan_name")
+                ->orderBy('submissions.id','DESC')
+                ->join('jenis_dokuments','jenis_dokuments.id','=','submissions.jenis_dokumen_id')
+                ->join('divisi','divisi.id','=','submissions.divisi_id')
+                ->join('tujuan_tanda_tangans','tujuan_tanda_tangans.id','=','submissions.tujuan_tanda_tangan_id')
+                ;
 
-        $data = $data->getCollection()->transform(function ($item) {
+        if(Auth::user()->position == User::IS_REQUESTER) $data->where('submissions.user_id', Auth::user()->id);
+
+        $data = $data->paginate(100)->getCollection()->transform(function ($item) {
             $item->dokumen = $item->dokumen 
                 ? asset($item->dokumen) 
                 : asset('no_image.jpg');
+            
+            $item->status_name = isset(Submission::$STATUS[$item->status]) ? Submission::$STATUS[$item->status] : 'Draft';
+
             return $item;
         });
 
@@ -51,7 +63,8 @@ class SubmissionController extends Controller
             'signatory_id' => $request->signatory_id,
             'jenis_tanda_tangan' => $request->jenis_tanda_tangan,
             'dokumen' => $request->dokumen,
-            'catatan' => $request->catatan
+            'catatan' => $request->catatan,
+            'user_id'=>Auth::user()->id
         ]);
 
         $file = $request->file('dokumen');
@@ -63,6 +76,40 @@ class SubmissionController extends Controller
         $submission->update(['dokumen'=>$path]);
 
         return response()->json(['status'=>'success'],200);
+    }
+
+    public function delete($id)
+    {
+        try {
+            $submission = Submission::find($id);
+
+            if (!$submission) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Data tidak ditemukan'
+                ], 404);
+            }
+            
+            if($submission->user_id == Auth::user()->id)  $submission->delete();
+
+            $path = base_path('public/' . $submission->dokumen);
+            if ($submission->dokumen && file_exists($path)) {
+                @unlink($path);
+            }
+
+            $submission->delete();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data berhasil dihapus'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal menghapus data: '.$e->getMessage()
+            ], 500);
+        }
     }
     
 }
