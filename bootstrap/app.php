@@ -28,6 +28,9 @@ $app->withEloquent();
 
 $app->register(Illuminate\Validation\ValidationServiceProvider::class);
 
+$app->register(Illuminate\Mail\MailServiceProvider::class);
+$app->configure('mail');
+
 /*
 |--------------------------------------------------------------------------
 | Register Container Bindings

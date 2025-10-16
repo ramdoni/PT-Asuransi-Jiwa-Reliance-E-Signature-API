@@ -11,9 +11,9 @@ class User extends Model implements AuthenticatableContract, JWTSubject
 {
     use Authenticatable;
 
-    protected $fillable = ['name', 'email', 'password'];
+    // protected $fillable = ['name', 'email', 'password','po'];
     protected $hidden = ['password'];
-
+    protected $guarded = ['id'];
     public const IS_REQUESTER = 1;
     public const IS_COR_SEC = 2;
     public const IS_LEGAL = 3;

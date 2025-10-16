@@ -14,6 +14,9 @@ Documentation for the framework can be found on the [Lumen website](https://lume
 ## Compile
 ``php -S localhost:8000 -t public``
 
+storage link
+``ln -s ../storage/app/public/uploads uploads``
+
 ## Contributing
 
 Thank you for considering contributing to Lumen! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
@@ -25,3 +28,28 @@ If you discover a security vulnerability within Lumen, please send an e-mail to 
 ## License
 
 The Lumen framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Docker
+
+docker run -d --name sign-gateway \
+-p 1303:1303 \
+-e API_URL={{API_URL}} \
+-e API_KEY=your-api-key \
+-e ENV=STAGING registry.xignature.co.id/xignature/public-sign-gateway:2.1.0
+
+
+## SAMPLE DOCKER
+
+https://docs.xignature.dev/en/api-v3/sign-gateway
+
+docker login registry.xignature.co.id -u public -p CS0BkvzAytj9yxj
+docker login registry.xignature.dev -u public -p CS0BkvzAytj9yxj
+
+
+docker run -d --name sign-gateway \
+-p 1303:1303 \
+-e API_URL=https://api.xignature.dev \
+-e API_KEY=71645d4293da14a0e8e9098c27b60344be4afc14e42a1bf4967f929f1e4c19f2f8ed3463f4ea1f2228b8ed007bad2e65a438131a86e0105baec99bb082459a89 \
+-e ENV=STAGING registry.xignature.co.id/xignature/public-sign-gateway:2.1.0
+
+docker run -d --name sign-gateway -p 1303:1303 -e API_URL=https://api.xignature.dev -e API_KEY=71645d4293da14a0e8e9098c27b60344be4afc14e42a1bf4967f929f1e4c19f2f8ed3463f4ea1f2228b8ed007bad2e65a438131a86e0105baec99bb082459a89 -e ENV=STAGING registry.xignature.co.id/xignature/public-sign-gateway:2.1.0

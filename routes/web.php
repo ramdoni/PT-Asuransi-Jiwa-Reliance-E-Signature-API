@@ -28,10 +28,16 @@ $router->get('/', function () use ($router) {
 
 $router->post('auth/login', 'AuthController@login');
 
+$router->get('dashboard/send-notification','DashboardController@sendNotification');
+$router->get('submission/validate-link/{id}','SubmissionController@validateLink');
+$router->post('legal/process', 'LegalController@process');
+
 $router->group(['middleware' => 'auth.jwt'], function () use ($router) {
+    $router->get('dashboard', 'DashboardController@index');
     $router->post('auth/register', 'AuthController@register');
     $router->get('auth/me', 'AuthController@me');
     $router->get('auth/index', 'AuthController@index');
+    $router->put('auth/update/{id}', 'AuthController@update');
 
     $router->get('divisi/index', 'DivisiController@index');
     $router->post('divisi/store', 'DivisiController@store');
@@ -46,6 +52,12 @@ $router->group(['middleware' => 'auth.jwt'], function () use ($router) {
     $router->post('signatory/store', 'SignatoryController@store');
 
     $router->get('submission/index', 'SubmissionController@index');
+    $router->get('submission/{id}/show', 'SubmissionController@show');
+    $router->post('submission/finish', 'SubmissionController@finish');
     $router->post('submission/store', 'SubmissionController@store');
+    $router->post('submission/submit-signer', 'SubmissionController@submitSigner');
+    $router->post('submission/submit-place-fields', 'SubmissionController@submitPlaceFields');
     $router->delete('submission/{id}/delete', 'SubmissionController@delete');
+    $router->get('submission/{id}/assigner', 'SubmissionController@assigner');
+    $router->get('submission/{id}/logs', 'SubmissionController@logs');
 });

@@ -16,20 +16,51 @@ class AuthController extends Controller
 
         return response()->json(['data'=>$data]);
     }
+    public function update($id,Request $request)
+    {
+        $this->validate($request, [
+            'name' => 'required',
+            'email' => 'required',
+            'position' =>'required',
+            'phone' => 'required'
+        ]);
 
+        $user = User::find($id);
+
+        if (!$user){
+            return response()->json(['error' => 'Data tidak ditemukan'], 401);
+        }
+
+        $user->update([
+            'name'=>$request->name,
+            'email'=>$request->email,
+            'position'=>$request->position,
+            'phone'=>$request->phone
+        ]);
+
+        if($request->password){
+            $user->update(['password' => Hash::make($request->password)]);
+        }
+
+        $token = JWTAuth::fromUser($user);
+
+        return response()->json(compact('user', 'token'));
+    }
     public function register(Request $request)
     {
         $this->validate($request, [
             'name' => 'required',
             'email' => 'required|email|unique:users',
             'password' => 'required|min:6',
-            'position'=>'required'
+            'position'=>'required',
+            'phone'=>'required',
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'position' => $request->position,
+            'phone' => $request->phone,
             'password' => Hash::make($request->password),
         ]);
 
@@ -60,10 +91,9 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                // kalau kamu punya kolom tambahan bisa sertakan di sini
                 'phone' => $user->phone ?? null,
                 'alamat' => $user->alamat ?? null,
-                'position' => $user->position ?? null,
+                'position' => $user->position ?? null
             ]
         ]);
     }
