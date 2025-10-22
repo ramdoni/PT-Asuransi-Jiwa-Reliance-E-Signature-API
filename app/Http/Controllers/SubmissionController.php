@@ -21,13 +21,12 @@ class SubmissionController extends Controller
                 ->orderBy('submissions.id','DESC')
                 ->join('jenis_dokuments','jenis_dokuments.id','=','submissions.jenis_dokumen_id')
                 ->join('divisi','divisi.id','=','submissions.divisi_id')
-                ->join('tujuan_tanda_tangans','tujuan_tanda_tangans.id','=','submissions.tujuan_tanda_tangan_id')
-                ;
+                ->join('tujuan_tanda_tangans','tujuan_tanda_tangans.id','=','submissions.tujuan_tanda_tangan_id');
 
         if(Auth::user()->position == User::IS_REQUESTER) $data->where('submissions.user_id', Auth::user()->id);
 
         $data = $data->paginate(100)->getCollection()->transform(function ($item) {
-            $item->dokumen = $item->dokumen 
+            $item->dokumen = $item->dokumen
                 ? asset($item->dokumen) 
                 : asset('no_image.jpg');
             
@@ -35,7 +34,7 @@ class SubmissionController extends Controller
             $item->status_class = 'yellow';
             
             if($item->status==Submission::STATUS_DRAFT) $item->status_class = 'yellow';
-            if($item->status==Submission::STATUS_LEGAL_REVIEW) $item->status_class = 'purple';
+            if($item->status==Submission::STATUS_LEGAL_REVIEW) $item->status_class = 'blue';
             if($item->status==Submission::STATUS_PENDING_SIGNATURE) $item->status_class = 'blue';
             if($item->status==Submission::STATUS_SIGNED) $item->status_class = 'green';
             if($item->status==Submission::STATUS_REJECT) $item->status_class = 'red';
@@ -85,14 +84,14 @@ class SubmissionController extends Controller
         $submission->dokumen = asset($submission->dokumen);
 
         $assigner = SubmissionSigner::where(['submission_id'=>$submission->id])->get();
+        $assigner_stamp = SubmissionSigner::where(['submission_id'=>$submission->id])->whereNotNull('page')->get();
 
-        return response()->json(['status'=>'success','data'=>$submission,'assigner'=>$assigner],200);
+        return response()->json(['status'=>'success','data'=>$submission,'assigner'=>$assigner,'assigner_stamp'=>$assigner_stamp],200);
     }
 
     public function assigner($id)
     {
         $assigner = SubmissionSigner::where(['submission_id'=>$id])->get();
-
         if (!$assigner) {
             return response()->json([
                 'status' => 'error',
@@ -147,6 +146,16 @@ class SubmissionController extends Controller
         
         $submission->update(['dokumen'=>$path]);
 
+        $director = User::whereIn('position',[User::IS_DIRECTOR_1,User::IS_DIRECTOR_2])->get();
+        foreach($director as $item){
+            SubmissionSigner::create([
+                'submission_id' => $submission->id,
+                'user_id'=>$item->id,
+                'name' => $item->name,
+                'email' => $item->email,
+            ]);
+        }
+
         return response()->json(['status'=>'success','data'=>$submission],200);
     }
 
@@ -177,9 +186,9 @@ class SubmissionController extends Controller
             'message'=>$request->message,
             'link_code' => $link_code,
             'link_step'=>1,
-            'link_expired'=>date('Y-m-d H:i:s',strtotime("+1 day"))
-            // 'status'=>Submission::STATUS_LEGAL_REVIEW,
-            // 'submission_step'=>5
+            'link_expired'=>date('Y-m-d H:i:s',strtotime("+1 day")),
+            'status'=>Submission::STATUS_LEGAL_REVIEW,
+            'submission_step'=>5
         ]);
 
         $link = env('FRONTEND_URL') ."/preview-dokument/{$link_code}";
@@ -212,7 +221,8 @@ class SubmissionController extends Controller
     {
         try {
             $this->validate($request,[
-                'id' => 'required|integer|exists:submissions,id'
+                'id' => 'required|integer|exists:submissions,id',
+                'signature_position' => 'required'
             ]);
             $submission = Submission::find($request->id);
             if (!$submission) {
@@ -223,8 +233,21 @@ class SubmissionController extends Controller
                     'id'=>$request->id
                 ], 404);
             }
+            
             $submission->update(['submission_step'=>4]);
-            return response()->json(['status'=>'success'],200);
+
+            foreach(json_decode($request->signature_position) as $item){
+                SubmissionSigner::where([
+                    'submission_id' => $submission->id,
+                    'user_id' => $item->user_id,
+                ])->update([
+                    'x' => $item->x,
+                    'y' => $item->y,
+                    'page' => $item->page
+                ]);
+            }
+
+            return response()->json(['status'=>'success','signature_position'=>json_decode($request->signature_position)],200);
         }catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
@@ -267,7 +290,9 @@ class SubmissionController extends Controller
                 SubmissionSigner::updateOrCreate([
                     'submission_id' => $submission->id,
                     'email' => $item['email'],
+                    'user_id' => $item['user_id'],
                 ],[
+                    'user_id' => $item['user_id'],
                     'submission_id' => $submission->id,
                     'name' => $item['name'],
                     'email' => $item['email'],
@@ -304,6 +329,8 @@ class SubmissionController extends Controller
                 @unlink($path);
             }
 
+            SubmissionSigner::where('submission_id',$submission->id)->delete();
+
             $submission->delete();
 
             return response()->json([
@@ -311,6 +338,32 @@ class SubmissionController extends Controller
                 'message' => 'Data berhasil dihapus'
             ], 200);
 
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal menghapus data: '.$e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function clearSigner($id)
+    {
+        try {
+            $signer = SubmissionSigner::find($id);
+            if (!$signer) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Data tidak ditemukan'
+                ], 404);
+            }
+
+            $signer->update(['x'=>null,'y'=>null,'page'=>null]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data berhasil dihapus'
+
+            ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
@@ -340,7 +393,7 @@ class SubmissionController extends Controller
             $submission->status_class = 'yellow';
             
             if($submission->status == Submission::STATUS_DRAFT) $submission->status_class = 'yellow';
-            if($submission->status == Submission::STATUS_LEGAL_REVIEW) $submission->status_class = 'purple';
+            if($submission->status == Submission::STATUS_LEGAL_REVIEW) $submission->status_class = 'blue';
             if($submission->status == Submission::STATUS_PENDING_SIGNATURE) $submission->status_class = 'blue';
             if($submission->status == Submission::STATUS_SIGNED) $submission->status_class = 'green';
             if($submission->status == Submission::STATUS_REJECT) $submission->status_class = 'red';
@@ -362,10 +415,13 @@ class SubmissionController extends Controller
                 ], 404);
             }
             
+            $assigner = SubmissionSigner::where(['submission_id'=>$submission->id])->get();
+
             return response()->json([
                 'status' => 'success',
                 'message' => 'Data berhasil',
-                'data' => $submission->toArray()
+                'data' => $submission->toArray(),
+                'assigner' => $assigner
             ], 200);
 
         } catch (\Exception $e) {

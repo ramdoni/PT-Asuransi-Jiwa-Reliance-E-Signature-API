@@ -7,6 +7,7 @@
     "require": {
         "php": "^7.3|^8.0",
         "flipbox/lumen-generator": "^9.3",
+        "guzzlehttp/guzzle": "^7.10",
         "illuminate/mail": "^8.83",
         "laravel/lumen-framework": "^8.3.1",
         "league/flysystem": "^1.0",
@@ -29,7 +30,8 @@
             "tests/"
         ],
         "files": [
-            "app/Helpers/GeneralHelpers.php" 
+            "app/Helpers/GeneralHelpers.php",
+            "app/Helpers/StampHelper.php"
         ]
     },
     "config": {

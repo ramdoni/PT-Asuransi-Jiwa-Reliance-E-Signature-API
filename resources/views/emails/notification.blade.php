@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <body style="font-family: sans-serif;">
-    <h2>ACTION REQUESTED</h2>
+    <p>ACTION REQUESTED</p>
     {!!  $messageText !!}
     <hr>
     <small>Thanks<br />The Reliance Life Team<br /></small>

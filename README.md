@@ -37,14 +37,11 @@ docker run -d --name sign-gateway \
 -e API_KEY=your-api-key \
 -e ENV=STAGING registry.xignature.co.id/xignature/public-sign-gateway:2.1.0
 
-
 ## SAMPLE DOCKER
 
 https://docs.xignature.dev/en/api-v3/sign-gateway
 
 docker login registry.xignature.co.id -u public -p CS0BkvzAytj9yxj
-docker login registry.xignature.dev -u public -p CS0BkvzAytj9yxj
-
 
 docker run -d --name sign-gateway \
 -p 1303:1303 \

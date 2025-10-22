@@ -21,7 +21,7 @@ class LegalController extends Controller
 
         if(isset($request->submission_id)) $submission = Submission::find($request->submission_id);
         if(isset($request->link_code)) $submission = Submission::where('link_code',$request->link_code)->first();
-        if (!$submission) {
+        if (!$submission){
             return response()->json([
                 'status' => 'error',
                 'message' => 'Data tidak ditemukan'
