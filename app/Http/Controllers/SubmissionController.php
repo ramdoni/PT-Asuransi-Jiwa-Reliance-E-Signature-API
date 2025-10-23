@@ -29,7 +29,11 @@ class SubmissionController extends Controller
             $item->dokumen = $item->dokumen
                 ? asset($item->dokumen) 
                 : asset('no_image.jpg');
-            
+
+            $item->dokumen_signed = $item->dokumen_signed
+                ? asset($item->dokumen_signed) 
+                : asset('no_image.jpg');
+                
             $item->status_name = isset(Submission::$STATUS[$item->status]) ? Submission::$STATUS[$item->status] : 'Draft';
             $item->status_class = 'yellow';
             
@@ -82,6 +86,7 @@ class SubmissionController extends Controller
 
         $submission->dokumen_absolute = $submission->dokumen;
         $submission->dokumen = asset($submission->dokumen);
+        $submission->dokumen_signed = asset($submission->dokumen_signed);
 
         $assigner = SubmissionSigner::where(['submission_id'=>$submission->id])->get();
         $assigner_stamp = SubmissionSigner::where(['submission_id'=>$submission->id])->whereNotNull('page')->get();
