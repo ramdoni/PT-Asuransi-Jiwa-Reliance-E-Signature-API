@@ -67,7 +67,7 @@ if (!function_exists('stampDocument')) {
 
             // Simpan ke storage
             $fileName = 'signed.pdf';
-            $filePath = "public/signed/{$submission->id}/" . $fileName;
+            $filePath = "public/upload/{$submission->id}/" . $fileName;
             Storage::put($filePath, $pdfContent);
 
             return [

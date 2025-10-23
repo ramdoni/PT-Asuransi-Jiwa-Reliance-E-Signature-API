@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\NotificationMail;
 use Illuminate\Support\Facades\Mail;
+use App\Models\SubmissionSigner;
 
 class DirectorController extends Controller
 {
@@ -42,12 +43,42 @@ class DirectorController extends Controller
             ]);
 
             if($request->director==2){
+
+                $path = $submission->dokumen;
+
+                $base64 = file_get_contents($path);
+                $base64 = base64_encode($base64);
+
+                $signers = SubmissionSigner::where(['submission_id'=>$submission->id])->whereNotNull('page')->get();
+                $position =[];
+                foreach($signers as $k => $signer){
+                    $position[$k] = [
+                        "x"=>(int)$signer->x,
+                        "y"=>(int)$signer->y,
+                        "page"=>(int)$signer->page,
+                        "w" => 130,
+                        "h" => 50
+                    ];
+                }
+                
+                $result = stampDocument($base64, 'Testing Document', 'I Approve this document',$position,$submission);
+
+                if($signer){
+                    if($result['success']){
+                        $signer->update([
+                            'file_signer' => $result['file_path']
+                        ]);
+                    }
+                }
+
                 $submission->update([
                     'status' => Submission::STATUS_SIGNED,
                     'link_expired' => null,
                     'link_step' => $link_step,
                     'link_code' => null,
+                    'dokumen_signed'=> isset($result['file_path']) ? $result['file_path'] : ''
                 ]);
+                
             }else{
                 $link = env('FRONTEND_URL') ."/preview-dokument/{$link_code}";
                 foreach(User::where('position',User::IS_DIRECTOR_1)->get() as $item){

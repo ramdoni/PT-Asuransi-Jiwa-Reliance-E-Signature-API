@@ -8,33 +8,30 @@ class CorsMiddleware
 {
     public function handle($request, Closure $next)
     {
-        $origin = $request->header('Origin');
+        $response = $next($request);
+
+        $origin = $request->headers->get('Origin');
 
         $allowedOrigins = [
-            'http://localhost:3000',
+            env('FRONTEND_URL', 'http://localhost:3000'),
             'http://relisign.entigi.co.id',
             'https://relisign.entigi.co.id',
         ];
 
-        // Cek apakah origin diizinkan
-        $allowOrigin = in_array($origin, $allowedOrigins) ? $origin : $allowedOrigins[0];
-
-        // Jika request adalah OPTIONS (preflight), langsung kirim respons kosong 204
-        if ($request->getMethod() === 'OPTIONS') {
-            return response('', 204)
-                ->header('Access-Control-Allow-Origin', $allowOrigin)
-                ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-                ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
-                ->header('Access-Control-Allow-Credentials', 'true');
+        if (in_array($origin, $allowedOrigins)) {
+            $response->headers->set('Access-Control-Allow-Origin', $origin);
         }
 
-        // Untuk request biasa
-        $response = $next($request);
+        $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+        $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+        $response->headers->set('Access-Control-Allow-Credentials', 'true');
 
-        return $response
-            ->header('Access-Control-Allow-Origin', $allowOrigin)
-            ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-            ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
-            ->header('Access-Control-Allow-Credentials', 'true');
+        // Jika request OPTIONS (preflight), langsung return response kosong
+        if ($request->getMethod() === "OPTIONS") {
+            $response->setStatusCode(200);
+            $response->setContent('');
+        }
+
+        return $response;
     }
 }
