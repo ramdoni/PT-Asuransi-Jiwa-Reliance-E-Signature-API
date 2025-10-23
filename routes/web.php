@@ -22,13 +22,15 @@ $router->options('{any:.*}', function (Request $request) {
         ->header('Access-Control-Allow-Credentials', 'true');
 });
 $router->get('/', function () use ($router) { return 'ENTIGI System 1.0'; });
-$router->post('auth/login', 'AuthController@login');
-$router->get('dashboard/send-notification','DashboardController@sendNotification');
-$router->get('submission/validate-link/{id}','SubmissionController@validateLink');
-$router->post('legal/process', 'LegalController@process');
-$router->post('director/process', 'DirectorController@process');
-$router->get('pdf/{id}', 'FileController@showPdf');
-$router->get('test-stamp/{id}', 'FileController@testStamp');
+$router->group(['middleware' => ['cors']], function () use ($router) {
+    $router->post('auth/login', 'AuthController@login');
+    $router->get('dashboard/send-notification','DashboardController@sendNotification');
+    $router->get('submission/validate-link/{id}','SubmissionController@validateLink');
+    $router->post('legal/process', 'LegalController@process');
+    $router->post('director/process', 'DirectorController@process');
+    $router->get('pdf/{id}', 'FileController@showPdf');
+    $router->get('test-stamp/{id}', 'FileController@testStamp');
+});
 
 $router->group(['middleware' => ['auth.jwt','cors']], function () use ($router) {
     $router->get('dashboard', 'DashboardController@index');
