@@ -30,7 +30,7 @@ $router->post('director/process', 'DirectorController@process');
 $router->get('pdf/{id}', 'FileController@showPdf');
 $router->get('test-stamp/{id}', 'FileController@testStamp');
 
-$router->group(['middleware' => 'auth.jwt','cors'], function () use ($router) {
+$router->group(['middleware' => ['auth.jwt','cors']], function () use ($router) {
     $router->get('dashboard', 'DashboardController@index');
     $router->post('auth/register', 'AuthController@register');
     $router->get('auth/me', 'AuthController@me');
