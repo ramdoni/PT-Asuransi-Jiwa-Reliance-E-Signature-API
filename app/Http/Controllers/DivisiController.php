@@ -28,5 +28,25 @@ class DivisiController extends Controller
         
         return response()->json(['status'=>'success'],200);
     }
-    
+
+    public function update($id,Request $request)
+    {
+        $this->validate($request, [
+            'name' => 'required',
+            'email' => 'required'
+        ]);
+
+        $divisi = Divisi::find($id);
+
+        if (!$divisi){
+            return response()->json(['error' => 'Data tidak ditemukan'], 401);
+        }
+
+        $divisi->update([
+            'name'=>$request->name,
+            'email'=>$request->email
+        ]);
+
+        return response()->json(['status'=>'success'],200);
+    }
 }

@@ -12,7 +12,13 @@ class AuthController extends Controller
 {
     public function index()
     {
-        $data = User::orderBy('id','DESC')->paginate();
+        $data = User::orderBy('id','DESC')->paginate(100)
+            ->getCollection()->transform(function ($item) {
+                $item->position_name = isset(User::$POSITION[$item->position]) ? User::$POSITION[$item->position] : '';
+
+                return $item;
+            })
+            ;
 
         return response()->json(['data'=>$data]);
     }

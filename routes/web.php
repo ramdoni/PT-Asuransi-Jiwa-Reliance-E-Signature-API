@@ -41,9 +41,11 @@ $router->group(['middleware' => ['auth.jwt']], function () use ($router) {
 
     $router->get('divisi/index', 'DivisiController@index');
     $router->post('divisi/store', 'DivisiController@store');
+    $router->put('divisi/update/{id}', 'DivisiController@update');
     
     $router->get('jenis-dokumen/index', 'JenisDokumenController@index');
     $router->post('jenis-dokumen/store', 'JenisDokumenController@store');
+    $router->put('jenis-dokumen/update/{id}', 'JenisDokumenController@update');
 
     $router->get('tujuan-tanda-tangan/index', 'TujuanTandaTanganController@index');
     $router->post('tujuan-tanda-tangan/store', 'TujuanTandaTanganController@store');

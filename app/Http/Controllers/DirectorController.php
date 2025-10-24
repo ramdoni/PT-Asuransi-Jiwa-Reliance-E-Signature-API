@@ -61,7 +61,7 @@ class DirectorController extends Controller
                     ];
                 }
                 
-                $result = stampDocument($base64, 'Testing Document', 'I Approve this document',$position,$submission);
+                $result = stampDocument($base64, $submission->judul_dokumen, $submission->perihal,$position,$submission);
 
                 if($signer){
                     if($result['success']){

@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Mail;
 
 class SubmissionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $data = Submission::selectRaw("submissions.*, DATE_FORMAT(submissions.due_date, '%d-%m-%Y') as due_date, DATE_FORMAT(submissions.created_at, '%d-%m-%Y') as submitted_at,jenis_dokuments.name as jenis_dokumen_name,divisi.name as divisi_name,tujuan_tanda_tangans.name as tujuan_tanda_tangan_name")
                 ->orderBy('submissions.id','DESC')
@@ -25,6 +25,36 @@ class SubmissionController extends Controller
 
         if(Auth::user()->position == User::IS_REQUESTER) $data->where('submissions.user_id', Auth::user()->id);
 
+        // 🔹 Filter dinamis berdasarkan request query string
+        if ($request->has('no_pengajuan') && $request->no_pengajuan !== '') {
+            $data->where('submissions.no_pengajuan', 'like', '%' . $request->no_pengajuan . '%');
+        }
+        if ($request->has('judul_dokumen') && $request->judul_dokumen !== '') {
+            $data->where('submissions.judul_dokumen', 'like', '%' . $request->judul_dokumen . '%');
+        }
+        if ($request->has('perihal') && $request->perihal !== '') {
+            $data->where('submissions.perihal', 'like', '%' . $request->perihal . '%');
+        }
+        if ($request->has('no_dokumen') && $request->no_dokumen !== '') {
+            $data->where('submissions.no_dokumen', 'like', '%' . $request->no_dokumen . '%');
+        }
+        if ($request->has('kategori_surat') && $request->kategori_surat !== '') {
+            $data->where('submissions.kategori_surat', 'like', '%' . $request->kategori_surat . '%');
+        }
+        if ($request->has('divisi_id') && $request->divisi_id !== '') {
+            $data->where('submissions.divisi_id', $request->divisi_id);
+        }
+        if ($request->has('status') && $request->status !== '') {
+            $data->where('submissions.status', $request->status);
+        }
+        // 🔹 Optional: Filter berdasarkan tanggal diterima / due_date
+        if ($request->has('tanggal_dari') && $request->has('tanggal_sampai')) {
+            $data->whereBetween('submissions.tanggal_diterima', [
+                $request->tanggal_dari,
+                $request->tanggal_sampai
+            ]);
+        }
+        
         $data = $data->paginate(100)->getCollection()->transform(function ($item) {
             $item->dokumen = $item->dokumen
                 ? asset($item->dokumen) 
@@ -420,7 +450,7 @@ class SubmissionController extends Controller
                 ], 404);
             }
             
-            $assigner = SubmissionSigner::where(['submission_id'=>$submission->id])->get();
+            $assigner = SubmissionSigner::where(['submission_id'=>$submission->id])->whereNotNull('page')->get();
 
             return response()->json([
                 'status' => 'success',
