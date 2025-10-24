@@ -16,7 +16,7 @@ use Illuminate\Http\Request;
 
 $router->options('{any:.*}', function (Request $request) {
     return response('', 200)
-        ->header('Access-Control-Allow-Origin', env('FRONTEND_URL'))
+        ->header('Access-Control-Allow-Origin', "*")
         ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
         ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
         ->header('Access-Control-Allow-Credentials', 'true');
