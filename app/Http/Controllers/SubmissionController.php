@@ -331,6 +331,12 @@ class SubmissionController extends Controller
                     'name' => $item['name'],
                     'email' => $item['email'],
                 ]);
+
+                if($item['email']=="") 
+                    SubmissionSigner::where([
+                            'submission_id' => $submission->id,
+                            'user_id' => $item['user_id'],
+                        ])->delete();
             }
             
             $submission->update(['submission_step'=>3]);
