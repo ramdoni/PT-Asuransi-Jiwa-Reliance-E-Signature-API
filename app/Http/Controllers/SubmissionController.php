@@ -324,7 +324,6 @@ class SubmissionController extends Controller
             foreach($items as $item){
                 SubmissionSigner::updateOrCreate([
                     'submission_id' => $submission->id,
-                    'email' => $item['email'],
                     'user_id' => $item['user_id'],
                 ],[
                     'user_id' => $item['user_id'],
