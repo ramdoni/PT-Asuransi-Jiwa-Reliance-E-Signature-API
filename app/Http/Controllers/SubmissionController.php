@@ -298,8 +298,8 @@ class SubmissionController extends Controller
             $validator = Validator::make($data, [
                 'id' => 'required|integer|exists:submissions,id',
                 'items' => 'required|array|min:1',
-                'items.*.name' => 'required|string',
-                'items.*.email' => 'required|email',
+                // 'items.*.name' => 'required|string',
+                // 'items.*.email' => 'required|email',
             ]);
 
             if ($validator->fails()) {
