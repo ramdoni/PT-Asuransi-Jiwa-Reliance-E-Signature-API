@@ -14,6 +14,8 @@ class FileController extends Controller
     public function showPdf($id)
     {
         $submission = Submission::find($id);
+        if(!$submission) return response()->json([], 404);
+
         $path = $submission->dokumen;
 
         if (!file_exists($path)) {
@@ -29,6 +31,7 @@ class FileController extends Controller
 
         // Tambahkan header agar browser bisa render PDF dan lolos CORS
         $response->headers->set('Content-Type', 'application/pdf');
+        $response->headers->set('Content-Disposition','inline; filename="document.pdf"');
         $response->headers->set('Access-Control-Allow-Origin', '*');
         $response->headers->set('Access-Control-Allow-Methods', 'GET, OPTIONS');
         $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization');

@@ -17,7 +17,10 @@ class SubmissionController extends Controller
 {
     public function index(Request $request)
     {
-        $data = Submission::selectRaw("submissions.*, DATE_FORMAT(submissions.due_date, '%d-%m-%Y') as due_date, DATE_FORMAT(submissions.created_at, '%d-%m-%Y') as submitted_at,jenis_dokuments.name as jenis_dokumen_name,divisi.name as divisi_name,tujuan_tanda_tangans.name as tujuan_tanda_tangan_name")
+        $data = Submission::selectRaw("submissions.*, DATE_FORMAT(submissions.due_date, '%d-%m-%Y') as due_date, 
+                    DATE_FORMAT(submissions.created_at, '%d-%m-%Y') as submitted_at,
+                    jenis_dokuments.name as jenis_dokumen_name,divisi.name as divisi_name,tujuan_tanda_tangans.name as tujuan_tanda_tangan_name
+                    ")
                 ->orderBy('submissions.id','DESC')
                 ->join('jenis_dokuments','jenis_dokuments.id','=','submissions.jenis_dokumen_id')
                 ->join('divisi','divisi.id','=','submissions.divisi_id')
@@ -72,7 +75,7 @@ class SubmissionController extends Controller
             if($item->status==Submission::STATUS_PENDING_SIGNATURE) $item->status_class = 'blue';
             if($item->status==Submission::STATUS_SIGNED) $item->status_class = 'green';
             if($item->status==Submission::STATUS_REJECT) $item->status_class = 'red';
-            
+                
             return $item;
         });
 
@@ -92,9 +95,17 @@ class SubmissionController extends Controller
 
     public function show($id)
     {
-        $submission = Submission::selectRaw("submissions.*, DATE_FORMAT(submissions.due_date, '%d-%m-%Y') as due_date, DATE_FORMAT(submissions.created_at, '%d-%m-%Y') as submitted_at,jenis_dokuments.name as jenis_dokumen_name,divisi.name as divisi_name,tujuan_tanda_tangans.name as tujuan_tanda_tangan_name")
+        $submission = Submission::selectRaw("submissions.*, 
+                                DATE_FORMAT(submissions.due_date, '%d-%m-%Y') as due_date, 
+                                DATE_FORMAT(submissions.created_at, '%d-%m-%Y') as submitted_at,
+                                jenis_dokuments.name as jenis_dokumen_name,
+                                divisi.name as divisi_name,
+                                tujuan_tanda_tangans.name as tujuan_tanda_tangan_name,
+                                jenis_dokument_reply.name as reply_jenis_dokumen_name
+                            ")
                             ->where('submissions.id',$id)
                             ->join('jenis_dokuments','jenis_dokuments.id','=','submissions.jenis_dokumen_id')
+                            ->join('jenis_dokuments as jenis_dokument_reply','jenis_dokuments.id','=','submissions.reply_jenis_dokumen_id')
                             ->join('divisi','divisi.id','=','submissions.divisi_id')
                             ->join('tujuan_tanda_tangans','tujuan_tanda_tangans.id','=','submissions.tujuan_tanda_tangan_id')
                             ->first();
@@ -113,10 +124,11 @@ class SubmissionController extends Controller
         if($submission->status == Submission::STATUS_PENDING_SIGNATURE) $submission->status_class = 'blue';
         if($submission->status == Submission::STATUS_SIGNED) $submission->status_class = 'green';
         if($submission->status == Submission::STATUS_REJECT) $submission->status_class = 'red';
-
+        
         $submission->dokumen_absolute = $submission->dokumen;
         $submission->dokumen = asset($submission->dokumen);
         $submission->dokumen_signed = asset($submission->dokumen_signed);
+        $submission->reply_referensi_surat = asset($submission->reply_referensi_surat);
 
         $assigner = SubmissionSigner::where(['submission_id'=>$submission->id])->get();
         $assigner_stamp = SubmissionSigner::where(['submission_id'=>$submission->id])->whereNotNull('page')->get();
@@ -149,13 +161,12 @@ class SubmissionController extends Controller
             'due_date' => 'required',
             'no_dokumen' => 'required',
             'tujuan_tanda_tangan_id' => 'required',
-            // 'signatory_id' => 'required',
             'jenis_tanda_tangan' => 'required',
             'dokumen' => 'required|file|mimes:jpeg,png,pdf|max:10048',
             'catatan' => 'required'
         ]);
 
-        $submission = Submission::create([
+        $insert = [
             'kategori_surat' => $request->kategori_surat,
             'judul_dokumen' => $request->judul_dokumen,
             'perihal' => $request->perihal,
@@ -165,13 +176,23 @@ class SubmissionController extends Controller
             'due_date' =>$request->due_date,
             'no_dokumen' => $request->no_dokumen,
             'tujuan_tanda_tangan_id' => $request->tujuan_tanda_tangan_id,
-            // 'signatory_id' => $request->signatory_id,
             'jenis_tanda_tangan' => $request->jenis_tanda_tangan,
             'dokumen' => $request->dokumen,
             'catatan' => $request->catatan,
             'user_id'=>Auth::user()->id,
             'submission_step'=>2
-        ]);
+        ];
+
+        if($request->kategori_surat==2){
+            $insert['reply_judul_dokumen'] = $request->reply_judul_dokumen;
+            $insert['reply_perihal'] = $request->reply_perihal;
+            $insert['reply_jenis_dokumen_id'] = $request->reply_jenis_dokumen_id;
+            $insert['reply_pengirim_surat'] = $request->reply_pengirim_surat;
+            $insert['reply_no_surat'] = $request->reply_no_surat;
+            $insert['reply_tanggal_surat_diterima'] = $request->reply_tanggal_surat_diterima;
+        }
+
+        $submission = Submission::create($insert);
 
         $file = $request->file('dokumen');
         $path = Storage::disk('public')->putFile('uploads', $file);
@@ -181,6 +202,18 @@ class SubmissionController extends Controller
         
         $submission->update(['dokumen'=>$path]);
 
+        if($request->kategori_surat==2){
+            $file = $request->file('reply_referensi_surat');
+            if($file){
+                $path = Storage::disk('public')->putFile('uploads', $file);
+                $fileName = 'reply_referensi_surat.' . $file->extension();
+                
+                $path = $file->storeAs("uploads/{$submission->id}", $fileName, 'public');
+                
+                $submission->update(['reply_referensi_surat'=>$path]);   
+            }
+        }
+        
         $director = User::whereIn('position',[User::IS_DIRECTOR_1,User::IS_DIRECTOR_2])->get();
         foreach($director as $item){
             SubmissionSigner::create([
@@ -415,10 +448,17 @@ class SubmissionController extends Controller
     public function validateLink($id)
     {
         try {
-            $submission = Submission::selectRaw("submissions.*, DATE_FORMAT(submissions.due_date, '%d-%m-%Y') as due_date, DATE_FORMAT(submissions.created_at, '%d-%m-%Y') as submitted_at,jenis_dokuments.name as jenis_dokumen_name,divisi.name as divisi_name,tujuan_tanda_tangans.name as tujuan_tanda_tangan_name")
+            $submission = Submission::selectRaw("submissions.*, 
+                                DATE_FORMAT(submissions.due_date, '%d-%m-%Y') as due_date, 
+                                DATE_FORMAT(submissions.created_at, '%d-%m-%Y') as submitted_at,
+                                jenis_dokuments.name as jenis_dokumen_name,
+                                divisi.name as divisi_name,
+                                tujuan_tanda_tangans.name as tujuan_tanda_tangan_name,
+                                jenis_dokument_reply.name as reply_jenis_dokumen_name")
                             ->join('jenis_dokuments','jenis_dokuments.id','=','submissions.jenis_dokumen_id')
                             ->join('divisi','divisi.id','=','submissions.divisi_id')
                             ->join('tujuan_tanda_tangans','tujuan_tanda_tangans.id','=','submissions.tujuan_tanda_tangan_id')
+                            ->join('jenis_dokuments as jenis_dokument_reply','jenis_dokuments.id','=','submissions.reply_jenis_dokumen_id')
                             ->where('submissions.link_code',$id)
                             ->first();
 
@@ -440,6 +480,7 @@ class SubmissionController extends Controller
 
             $submission->dokumen_absolute = $submission->dokumen;
             $submission->dokumen = asset($submission->dokumen);
+            $submission->reply_referensi_surat = asset($submission->reply_referensi_surat);
 
             if(strtotime($submission->link_expired) <= strtotime(date('Y-m-d H:i:s'))){
                 return response()->json([
