@@ -105,7 +105,7 @@ class SubmissionController extends Controller
                             ")
                             ->where('submissions.id',$id)
                             ->join('jenis_dokuments','jenis_dokuments.id','=','submissions.jenis_dokumen_id')
-                            ->join('jenis_dokuments as jenis_dokument_reply','jenis_dokuments.id','=','submissions.reply_jenis_dokumen_id')
+                            ->leftJoin('jenis_dokuments as jenis_dokument_reply','jenis_dokuments.id','=','submissions.reply_jenis_dokumen_id')
                             ->leftJoin('divisi','divisi.id','=','submissions.divisi_id')
                             ->leftJoin('tujuan_tanda_tangans','tujuan_tanda_tangans.id','=','submissions.tujuan_tanda_tangan_id')
                             ->first();
