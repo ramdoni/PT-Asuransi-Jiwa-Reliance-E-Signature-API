@@ -19,7 +19,7 @@ class FileController extends Controller
         $path = $submission->dokumen;
 
         if (!file_exists($path)) {
-            return response()->json(['message' => 'File not found','file'=>$submission->dokumen], 404);
+            return response()->json(['message' => 'File not found','file'=>$submission->dokumen_signed ? $submission->dokumen_signed : $submission->dokumen], 404);
         }
 
         // Buat streamed response manual (karena Lumen tidak punya response()->file)

@@ -30,8 +30,8 @@ class Submission extends Model
 
         static::creating(function ($model) {
             // Ambil tanggal hari ini
-            $tanggal = date('Ymd');
-            $time = date('Hi');
+            $tahun = date('Ymd');
+            $bulan = numberToRomawi(date('m'));
             // Hitung nomor urut hari ini
             $lastTransaksi = self::whereDate('created_at', date('Y-m-d'))
                 ->orderBy('id', 'desc')
@@ -41,7 +41,9 @@ class Submission extends Model
                 : 0;
             $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
             // Set no_transaksi otomatis
-            $model->no_pengajuan = "{$time}-{$tanggal}-{$newNumber}";
+
+            // 150/AJRI-DIR/X/2025
+            $model->no_pengajuan = "{$newNumber}/AJRI-DIR/{$bulan}-{$tahun}";
         });
     }
 
