@@ -64,10 +64,15 @@ class DirectorController extends Controller
                 $result = stampDocument($base64, $submission->judul_dokumen, $submission->perihal,$position,$submission);
 
                 if($signer){
-                    if($result['success']){
+                    if(isset($result['success'])){
                         $signer->update([
                             'file_signer' => $result['file_path']
                         ]);
+                    }else{
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => $result
+                        ], 404);
                     }
                 }
 
