@@ -256,7 +256,7 @@ class SubmissionController extends Controller
             'link_step'=>1,
             'link_expired'=>date('Y-m-d H:i:s',strtotime("+1 day")),
             'status'=>Submission::STATUS_LEGAL_REVIEW,
-            'submission_step'=>5
+            'submission_step'=>4
         ]);
 
         $link = env('FRONTEND_URL') ."/preview-dokument/{$link_code}";
