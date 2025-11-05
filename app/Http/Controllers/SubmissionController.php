@@ -269,9 +269,9 @@ class SubmissionController extends Controller
         ]);
 
         try {
-            foreach(User::where('position',User::IS_LEGAL)->get() as $item){
-                if(!$item->email) continue;
-
+            // foreach(User::where('position',User::IS_LEGAL)->get() as $item){
+            $item = User::where('position',User::IS_LEGAL)->first();
+            if($item){
                 $subject = "{$submission->perihal} - Review requested by Relisign";
                 $message = "<p> Department ". (isset($submission->divisi->name) ? $submission->divisi->name ." ({$submission->divisi->email}) " : '')  ." has requested a signature</p>";
                 $message .= "<p>Note : {$submission->message}</p>";
@@ -279,6 +279,7 @@ class SubmissionController extends Controller
 
                 Mail::to($item->email)->send(new NotificationMail($subject, $message));
             }
+            // }
         } catch (\Exception $e) {
             return response()->json(['status'=>'success','message'=>$e->getMessage()],400);
         }

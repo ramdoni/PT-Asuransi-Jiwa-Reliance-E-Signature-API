@@ -6,7 +6,6 @@ use App\Models\Submission;
 use App\Models\SubmissionLog;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Mail\NotificationMail;
 use Illuminate\Support\Facades\Mail;
 
@@ -41,15 +40,13 @@ class LegalController extends Controller
             ]);
 
             $link = env('FRONTEND_URL') ."/preview-dokument/{$link_code}";
-            foreach(User::where('position',User::IS_DIRECTOR_1)->get() as $item){
-                if(!$item->email) continue;
-
+            $director = (User::where('position',User::IS_DIRECTOR_1)->first();
+            if($director and $director->email){
                 $subject = "{$submission->perihal} - Review requested by Relisign";
                 $message = "<p> Department ". (isset($submission->divisi->name) ? $submission->divisi->name ." ({$submission->divisi->email}) " : '')  ." has requested a signature</p>";
                 $message .= "<p>Note : {$submission->message}</p>";
                 $message .= "<p>Review Link : {$link}</p>";
-
-                Mail::to($item->email)->send(new NotificationMail($subject, $message));
+                Mail::to($director->email)->send(new NotificationMail($subject, $message));
             }
         }
         
