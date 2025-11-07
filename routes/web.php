@@ -38,6 +38,7 @@ $router->group(['middleware' => ['auth.jwt']], function () use ($router) {
     $router->get('auth/me', 'AuthController@me');
     $router->get('auth/index', 'AuthController@index');
     $router->put('auth/update/{id}', 'AuthController@update');
+    $router->delete('auth/{id}/delete', 'AuthController@delete');
 
     $router->get('divisi/index', 'DivisiController@index');
     $router->post('divisi/store', 'DivisiController@store');

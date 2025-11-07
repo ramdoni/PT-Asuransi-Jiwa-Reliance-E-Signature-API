@@ -104,6 +104,33 @@ class AuthController extends Controller
         ]);
     }
 
+    public function delete($id)
+    {
+        try {
+            $user = User::find($id);
+            
+            if (!$user) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Data tidak ditemukan'
+                ], 404);
+            }
+            
+            $user->delete();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data berhasil dihapus'
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Gagal menghapus data: '.$e->getMessage()
+            ], 500);
+        }
+    }
+
     public function me()
     {
         return response()->json(auth()->user());
