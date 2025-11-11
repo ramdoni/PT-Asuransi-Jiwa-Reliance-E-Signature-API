@@ -7,7 +7,9 @@ use App\Models\SubmissionLog;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Mail\NotificationMail;
+use App\Models\SubmissionSigner;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Http;
 
 class LegalController extends Controller
 {
@@ -40,14 +42,65 @@ class LegalController extends Controller
             ]);
 
             $link = env('FRONTEND_URL') ."/preview-dokument/{$link_code}";
-            $director = (User::where('position',User::IS_DIRECTOR_1)->first();
-            if($director and $director->email){
-                $subject = "{$submission->perihal} - Review requested by Relisign";
-                $message = "<p> Department ". (isset($submission->divisi->name) ? $submission->divisi->name ." ({$submission->divisi->email}) " : '')  ." has requested a signature</p>";
-                $message .= "<p>Note : {$submission->message}</p>";
-                $message .= "<p>Review Link : {$link}</p>";
-                Mail::to($director->email)->send(new NotificationMail($subject, $message));
+            
+            $signer = SubmissionSigner::where(['submission_id'=>$submission->id,'is_signed'=>0])->first();
+            if($signer){
+                if($signer->phone){
+                    $message  = "*REVIEW REQUESTER BY RELISIGN*\n\n";
+                    $message .= "*PERIHAL* : {$submission->perihal}\n";
+                    $message .= "*DEPARTMENT* ". (isset($submission->divisi->name) ? $submission->divisi->name ." ({$submission->divisi->email}) " : '')  ." has requested a signature\n";
+                    $message .= "*NOTE* : {$submission->message}\n";
+                    $message .= "*REVIEW LINK* : {$link}\n";
+                    
+                    Http::withHeaders([
+                        'Content-Type' => 'application/json',
+                    ])->post('http://wa-center.entigi.co.id/v1/wa/send', [
+                        'phone' => $signer->phone,
+                        'message' => $message,
+                    ]);
+                    $signer->update(['link_code'=>$link_code]);
+                }
+                if($signer->email){
+                    try {
+                        $subject = "{$submission->perihal} - Review requested by Relisign";
+                        $message = "<p> Department ". (isset($submission->divisi->name) ? $submission->divisi->name ." ({$submission->divisi->email}) " : '')  ." has requested a signature</p>";
+                        $message .= "<p>Note : {$submission->message}</p>";
+                        $message .= "<p>Review Link : {$link}</p>";
+                        Mail::to($signer->email)->send(new NotificationMail($subject, $message));
+
+                    } catch (\Exception $e) {}
+                }
             }
+            
+            return response()->json(['status'=>'success'],200);
+
+            // $director = User::where('position',User::IS_DIRECTOR_1)->first();
+
+            // if($director and $director->email){
+            //     try {
+            //         $message  = "*REVIEW REQUESTER BY RELISIGN*\n\n";
+            //         $message .= "*PERIHAL* : {$submission->perihal}\n";
+            //         $message .= "*DEPARTMENT* ". (isset($submission->divisi->name) ? $submission->divisi->name ." ({$submission->divisi->email}) " : '')  ." has requested a signature\n";
+            //         $message .= "*NOTE* : {$submission->message}\n";
+            //         $message .= "*REVIEW LINK* : {$link}\n";
+
+            //         Http::withHeaders([
+            //             'Content-Type' => 'application/json',
+            //         ])->post('http://wa-center.entigi.co.id/v1/wa/send', [
+            //             'phone' => $director->phone,
+            //             'message' => $message,
+            //         ]);
+
+            //         $subject = "{$submission->perihal} - Review requested by Relisign";
+            //         $message = "<p> Department ". (isset($submission->divisi->name) ? $submission->divisi->name ." ({$submission->divisi->email}) " : '')  ." has requested a signature</p>";
+            //         $message .= "<p>Note : {$submission->message}</p>";
+            //         $message .= "<p>Review Link : {$link}</p>";
+            //         Mail::to($director->email)->send(new NotificationMail($subject, $message));
+
+            //     } catch (\Exception $e) {
+            //         return response()->json(['status'=>'success','message'=>$e->getMessage()],200);
+            //     }
+            // }
         }
         
         SubmissionLog::create([

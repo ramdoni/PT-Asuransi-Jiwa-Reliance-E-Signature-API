@@ -7,6 +7,7 @@ use App\Models\SubmissionLog;
 use App\Models\SubmissionSigner;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -221,6 +222,7 @@ class SubmissionController extends Controller
                 'user_id'=>$item->id,
                 'name' => $item->name,
                 'email' => $item->email,
+                'phone' => $item->phone
             ]);
         }
 
@@ -269,9 +271,23 @@ class SubmissionController extends Controller
         ]);
 
         try {
-            // foreach(User::where('position',User::IS_LEGAL)->get() as $item){
             $item = User::where('position',User::IS_LEGAL)->first();
             if($item){
+                if($item->phone){
+                    $message  = "*REVIEW REQUESTER BY RELISIGN*\n\n";
+                    $message .= "*PERIHAL* : {$submission->perihal}\n";
+                    $message .= "*DEPARTMENT* ". (isset($submission->divisi->name) ? $submission->divisi->name ." ({$submission->divisi->email}) " : '')  ." has requested a signature\n";
+                    $message .= "*NOTE* : {$submission->message}\n";
+                    $message .= "*REVIEW LINK* : {$link}\n";
+
+                    Http::withHeaders([
+                        'Content-Type' => 'application/json',
+                    ])->post('http://wa-center.entigi.co.id/v1/wa/send', [
+                        'phone' => $item->phone,
+                        'message' => $message,
+                    ]);
+                }
+
                 $subject = "{$submission->perihal} - Review requested by Relisign";
                 $message = "<p> Department ". (isset($submission->divisi->name) ? $submission->divisi->name ." ({$submission->divisi->email}) " : '')  ." has requested a signature</p>";
                 $message .= "<p>Note : {$submission->message}</p>";
@@ -279,9 +295,8 @@ class SubmissionController extends Controller
 
                 Mail::to($item->email)->send(new NotificationMail($subject, $message));
             }
-            // }
         } catch (\Exception $e) {
-            return response()->json(['status'=>'success','message'=>$e->getMessage()],400);
+            return response()->json(['status'=>'success','message'=>$e->getMessage()],200);
         }
         
         return response()->json(['status'=>'success'],200);

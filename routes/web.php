@@ -1,5 +1,6 @@
 <?php
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 

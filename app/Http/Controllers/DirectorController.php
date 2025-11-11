@@ -6,9 +6,9 @@ use App\Models\Submission;
 use App\Models\SubmissionLog;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Mail\NotificationMail;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Http;
 use App\Models\SubmissionSigner;
 
 class DirectorController extends Controller
@@ -32,23 +32,48 @@ class DirectorController extends Controller
         ]);
 
         if(isset($request->link_code)){
-            $link_code = bin2hex(random_bytes(10));    
-            $link_step = $request->director==1 ? 3 : 4;
+            $checkSigner = SubmissionSigner::where(['link_code'=> $request->link_code,'submission_id'=>$submission->id])->first();
+            if($checkSigner) $checkSigner->update(['link_code'=>NULL,'is_signed'=>1]);
 
+            $link_code = bin2hex(random_bytes(10));    
             $submission->update([
                 'link_code' => $link_code,
-                'link_step' => $link_step,
                 'status' => Submission::STATUS_DIREKSI_2,
                 'link_expired' => date('Y-m-d H:i:s',strtotime("+1 day"))
             ]);
+            
+            $checkSigner = SubmissionSigner::where(['is_signed'=>0,'submission_id'=>$submission->id])->first();
+            if($checkSigner){
+                
+                $checkSigner->update(['link_code'=>$link_code]);
 
-            if($request->director==2){
+                $link = env('FRONTEND_URL') ."/preview-dokument/{$link_code}";
+                $message  = "*REVIEW REQUESTER BY RELISIGN*\n\n";
+                $message .= "*PERIHAL* : {$submission->perihal}\n";
+                $message .= "*DEPARTMENT* ". (isset($submission->divisi->name) ? $submission->divisi->name ." ({$submission->divisi->email}) " : '')  ." has requested a signature\n";
+                $message .= "*NOTE* : {$submission->message}\n";
+                $message .= "*REVIEW LINK* : {$link}\n";
 
+                Http::withHeaders([
+                    'Content-Type' => 'application/json',
+                ])->post('http://wa-center.entigi.co.id/v1/wa/send', [
+                    'phone' => $checkSigner->phone,
+                    'message' => $message,
+                ]);
+                try {
+                    if($checkSigner->email){
+                        $subject = "{$submission->perihal} - Signed requested by Relisign";
+                        $message = "<p> Department ". (isset($submission->divisi->name) ? $submission->divisi->name ." ({$submission->divisi->email}) " : '')  ." has requested a signature</p>";
+                        $message .= "<p>Note : {$submission->message}</p>";
+                        $message .= "<p>Review Document : {$link}</p>";
+
+                        Mail::to($checkSigner->email)->send(new NotificationMail($subject, $message));
+                    }
+                } catch (\Exception $e) {}
+            }else{
                 $path = $submission->dokumen;
-
                 $base64 = file_get_contents($path);
                 $base64 = base64_encode($base64);
-
                 $signers = SubmissionSigner::where(['submission_id'=>$submission->id])->whereNotNull('page')->get();
                 $position =[];
                 foreach($signers as $k => $signer){
@@ -62,7 +87,6 @@ class DirectorController extends Controller
                 }
                 
                 $result = stampDocument($base64, $submission->judul_dokumen, $submission->perihal,$position,$submission);
-
                 if($signer){
                     if(isset($result['success'])){
                         $signer->update([
@@ -75,36 +99,20 @@ class DirectorController extends Controller
                         ], 404);
                     }
                 }
-
                 $submission->update([
                     'status' => Submission::STATUS_SIGNED,
                     'link_expired' => null,
-                    'link_step' => $link_step,
                     'link_code' => null,
                     'dokumen_signed'=> isset($result['file_path']) ? $result['file_path'] : ''
                 ]);
-                
-            }else{
-                $link = env('FRONTEND_URL') ."/preview-dokument/{$link_code}";
-                foreach(User::where('position',User::IS_DIRECTOR_1)->get() as $item){
-                    if(!$item->email) continue;
-                    $subject = "{$submission->perihal} - Signed requested by Relisign";
-                    $message = "<p> Department ". (isset($submission->divisi->name) ? $submission->divisi->name ." ({$submission->divisi->email}) " : '')  ." has requested a signature</p>";
-                    $message .= "<p>Note : {$submission->message}</p>";
-                    $message .= "<p>Review Document : {$link}</p>";
-
-                    Mail::to($item->email)->send(new NotificationMail($subject, $message));
-                }
             }
         }
-        
-        $status = $request->director==1 ? Submission::STATUS_DIREKSI_1 : Submission::STATUS_DIREKSI_2;
-
+    
         SubmissionLog::create([
             'submission_id'=> $submission->id,
-            'status'=> $status,
-            'title'=> "The document has been signed by the director {$request->director}",
-            // 'email'=> Auth::user()->email
+            'status'=> Submission::STATUS_DIREKSI_1,
+            'title'=> "The document has been signed by the director {$checkSigner->name}",
+            'email'=> $checkSigner->email
         ]);
 
         return response()->json(['status'=>'success'],200);

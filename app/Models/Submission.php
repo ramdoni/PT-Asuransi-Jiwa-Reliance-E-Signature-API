@@ -8,7 +8,7 @@ class Submission extends Model
 {
     public $KATEGORY_SURAT = [1=>'SURAT BARU',2=>'SURAT BALASAN'];
     public $JENIS_TANDA_TANGAN = [1=>'DIGITAL',2=>'BASAH'];
-    public static $STATUS = [1=>'Draft',2=>'Signed',3=>'Legal Review',4=>'Pending Signature',5=>'Overdue',6=>'Direksi 1',7=>'Direksi 2',8=>'Reject','Reject Legal'=>9,'Approve Legal'=>10];
+    public static $STATUS = [1=>'Draft',2=>'Signed',3=>'Legal Review',4=>'Pending Signature',5=>'Overdue',6=>'Direksi',7=>'Direksi',8=>'Reject','Reject Legal'=>9,'Approve Legal'=>10];
     public const KATEGORI_SURAT_BARU = 1;
     public const KATEGORI_SURAT_BALASAN = 2;
     public const JENIS_TANDA_TANGAN_DIGITAL = 1;
