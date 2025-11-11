@@ -44,7 +44,6 @@ class DirectorController extends Controller
             
             $checkSigner = SubmissionSigner::where(['is_signed'=>0,'submission_id'=>$submission->id])->first();
             if($checkSigner){
-                
                 $checkSigner->update(['link_code'=>$link_code]);
 
                 $link = env('FRONTEND_URL') ."/preview-dokument/{$link_code}";
