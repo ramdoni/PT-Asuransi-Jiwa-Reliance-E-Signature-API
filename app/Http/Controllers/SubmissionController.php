@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Mail\NotificationMail;
 use Illuminate\Support\Facades\Mail;
+use function asset;
 
 class SubmissionController extends Controller
 {
