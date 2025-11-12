@@ -13,7 +13,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Mail\NotificationMail;
 use Illuminate\Support\Facades\Mail;
-use function asset;
 
 class SubmissionController extends Controller
 {
@@ -62,12 +61,12 @@ class SubmissionController extends Controller
         
         $data = $data->paginate(100)->getCollection()->transform(function ($item) {
             $item->dokumen = $item->dokumen
-                ? asset($item->dokumen) 
-                : asset('no_image.jpg');
+                ? \asset($item->dokumen) 
+                : \asset('no_image.jpg');
 
             $item->dokumen_signed = $item->dokumen_signed
-                ? asset($item->dokumen_signed) 
-                : asset('no_image.jpg');
+                ? \asset($item->dokumen_signed) 
+                : \asset('no_image.jpg');
                 
             $item->status_name = isset(Submission::$STATUS[$item->status]) ? Submission::$STATUS[$item->status] : 'Draft';
             $item->status_class = 'yellow';
