@@ -57,6 +57,7 @@ $router->group(['middleware' => ['auth.jwt']], function () use ($router) {
 
     $router->get('submission/index', 'SubmissionController@index');
     $router->get('submission/{id}/show', 'SubmissionController@show');
+    $router->post('submission/update/{id}', 'SubmissionController@update');
     $router->post('submission/finish', 'SubmissionController@finish');
     $router->post('submission/store', 'SubmissionController@store');
     $router->post('submission/submit-signer', 'SubmissionController@submitSigner');

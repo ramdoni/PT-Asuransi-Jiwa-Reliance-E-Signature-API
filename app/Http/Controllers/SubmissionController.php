@@ -97,7 +97,7 @@ class SubmissionController extends Controller
     public function show($id)
     {
         $submission = Submission::selectRaw("submissions.*, 
-                                DATE_FORMAT(submissions.due_date, '%d-%m-%Y') as due_date, 
+                                DATE_FORMAT(submissions.due_date, '%d-%m-%Y') as due_date_format, 
                                 DATE_FORMAT(submissions.created_at, '%d-%m-%Y') as submitted_at,
                                 jenis_dokuments.name as jenis_dokumen_name,
                                 divisi.name as divisi_name,
@@ -229,6 +229,82 @@ class SubmissionController extends Controller
         return response()->json(['status'=>'success','data'=>$submission],200);
     }
 
+    public function update($id, Request $request)
+    {
+        $validate = [
+            'kategori_surat' => 'required',
+            'judul_dokumen' => 'required',
+            'perihal' => 'required',
+            'jenis_dokumen_id' => 'required',
+            'divisi_id' => 'required',
+            'tanggal_diterima' => 'required',
+            'due_date' => 'required',
+            'no_dokumen' => 'required',
+            'tujuan_tanda_tangan_id' => 'required',
+            'jenis_tanda_tangan' => 'required',
+            'catatan' => 'required'
+        ];
+
+        if($request->dokumen){
+            $validate['dokumen'] = 'required|file|mimes:jpeg,png,pdf|max:10048';
+        }
+
+        $this->validate($request, $validate);
+
+        $insert = [
+            'kategori_surat' => $request->kategori_surat,
+            'judul_dokumen' => $request->judul_dokumen,
+            'perihal' => $request->perihal,
+            'jenis_dokumen_id' => $request->jenis_dokumen_id,
+            'divisi_id' => $request->divisi_id,
+            'tanggal_diterima' =>$request->tanggal_diterima,
+            'due_date' =>$request->due_date,
+            'no_dokumen' => $request->no_dokumen,
+            'tujuan_tanda_tangan_id' => $request->tujuan_tanda_tangan_id,
+            'jenis_tanda_tangan' => $request->jenis_tanda_tangan,
+            // 'dokumen' => $request->dokumen,
+            'catatan' => $request->catatan,
+            'user_id'=>Auth::user()->id,
+            'submission_step'=>2
+        ];
+
+        if($request->kategori_surat==2){
+            $insert['reply_judul_dokumen'] = $request->reply_judul_dokumen;
+            $insert['reply_perihal'] = $request->reply_perihal;
+            $insert['reply_jenis_dokumen_id'] = $request->reply_jenis_dokumen_id;
+            $insert['reply_pengirim_surat'] = $request->reply_pengirim_surat;
+            $insert['reply_no_surat'] = $request->reply_no_surat;
+            $insert['reply_tanggal_surat_diterima'] = $request->reply_tanggal_surat_diterima;
+        }
+
+        $submission = Submission::find($id);
+        $submission->update($insert);
+
+        $file = $request->file('dokumen');
+        if($file){
+            $path = Storage::disk('public')->putFile('uploads', $file);
+            $fileName = time() . '.' . $file->extension();
+            
+            $path = $file->storeAs("uploads/{$submission->id}", $fileName, 'public');
+            
+            $submission->update(['dokumen'=>$path]);
+        }
+
+        if($request->kategori_surat==2){
+            $file = $request->file('reply_referensi_surat');
+            if($file){
+                $path = Storage::disk('public')->putFile('uploads', $file);
+                $fileName = 'reply_referensi_surat.' . $file->extension();
+                
+                $path = $file->storeAs("uploads/{$submission->id}", $fileName, 'public');
+                
+                $submission->update(['reply_referensi_surat'=>$path]);   
+            }
+        }
+
+        return response()->json(['status'=>'success','data'=>$submission],200);
+    }
+
     public function finish(Request $request)
     {
         $this->validate($request, [
@@ -248,7 +324,6 @@ class SubmissionController extends Controller
         }
 
         $link_code = bin2hex(random_bytes(10));
-
         $submission->update([
             'email'=>$request->email,
             'email_cc'=>$request->email_cc,
@@ -435,6 +510,12 @@ class SubmissionController extends Controller
         }
     }
 
+    /**
+     * Hapus posisi tanda tangan signer berdasarkan ID.
+     *
+     * @param int|string $id
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function clearSigner($id)
     {
         try {
