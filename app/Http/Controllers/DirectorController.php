@@ -74,9 +74,14 @@ class DirectorController extends Controller
                 $base64 = file_get_contents($path);
                 $base64 = base64_encode($base64);
                 $signers = SubmissionSigner::where(['submission_id'=>$submission->id])->whereNotNull('page')->get();
-                $position =[];
+                $signer_positions =[];
                 foreach($signers as $k => $signer){
-                    $position[$k] = [
+                    $signer_positions[$k] = [
+                        "pat" => $signer->pat,
+                        "location" => $signer->location,    
+                        "reason" => $signer->reason,
+                        "visible" => true,
+                        "usingQR" => true,
                         "x"=>(int)$signer->x,
                         "y"=>(int)$signer->y,
                         "page"=>(int)$signer->page,
@@ -84,7 +89,7 @@ class DirectorController extends Controller
                         "h" => 50
                     ];
                 }
-                $result = stampDocument($base64, $submission->judul_dokumen, $submission->perihal,$position,$submission);
+                $result = stampDocument($base64, $submission->judul_dokumen, $submission->perihal,$signer_positions,$submission);
                 if($signer){
                     if(isset($result['success'])){
                         $signer->update([

@@ -14,10 +14,10 @@ if (!function_exists('stampDocument')) {
      * @param array|null $positions   Posisi tanda tangan (optional)
      * @return array|string           Response API
      */
-    function stampDocument($documentBase64, $title = 'Document', $reason = 'Approval', $positions = null,$submission)
+    function stampDocument($documentBase64, $title = 'Document', $reason = 'Approval', $signer_positions = null,$submission)
     {
         try {
-            $positions = $positions ?? [
+            $signer_positions = $signer_positions ?? [
                 [
                     "page" => 1,
                     "x" => 100,
@@ -27,17 +27,20 @@ if (!function_exists('stampDocument')) {
                 ]
             ];
 
+            
+
             $payload = [
-                "pat" => "4kiPE4bsXch4XzXUYsvUB9Wm6yPD48u5Onzh",
-                "location" => "Indonesia, Jakarta",
-                "reason" => $reason,
-                "visible" => true,
-                "hideDate" => false,
-                "usingQR" => true,
-                "signatureImage" => "",
+                // "pat" => "4kiPE4bsXch4XzXUYsvUB9Wm6yPD48u5Onzh",
+                // "location" => "Indonesia, Jakarta",
+                // "reason" => $reason,
+                // "visible" => true,
+                // "hideDate" => false,
+                // "usingQR" => true,
+                // "signatureImage" => "",
                 "document" => $documentBase64,
                 "title" => $title,
-                "signPositions" => $positions
+                "signers" =>     $signer_positions
+                // "signPositions" => $positions
             ];
 
             $response = Http::withHeaders([

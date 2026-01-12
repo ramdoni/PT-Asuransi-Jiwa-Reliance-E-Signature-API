@@ -49,4 +49,16 @@ class DivisiController extends Controller
 
         return response()->json(['status'=>'success'],200);
     }
+    public function delete($id)
+    {
+        $divisi = Divisi::find($id);
+
+        if (!$divisi){
+            return response()->json(['error' => 'Data tidak ditemukan'], 401);
+        }
+
+        $divisi->delete();
+
+        return response()->json(['status'=>'success'],200);
+    }
 }

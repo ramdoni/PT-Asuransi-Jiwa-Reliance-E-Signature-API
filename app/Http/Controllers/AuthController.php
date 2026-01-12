@@ -41,7 +41,9 @@ class AuthController extends Controller
             'name'=>$request->name,
             'email'=>$request->email,
             'position'=>$request->position,
-            'phone'=>$request->phone
+            'phone'=>$request->phone,
+            'xsignature_id'=>$request->xsignature_id,
+            'xsignature_token'=>$request->xsignature_token,
         ]);
 
         if($request->password){
@@ -68,6 +70,8 @@ class AuthController extends Controller
             'position' => $request->position,
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
+            'xsignature_id' => $request->xsignature_id,
+            'xsignature_token' => $request->xsignature_token,
         ]);
 
         $token = JWTAuth::fromUser($user);

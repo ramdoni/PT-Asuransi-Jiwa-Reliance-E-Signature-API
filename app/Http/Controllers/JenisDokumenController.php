@@ -45,4 +45,16 @@ class JenisDokumenController extends Controller
 
         return response()->json(['status'=>'success'],200);
     }
+    public function delete($id)
+    {
+        $jenisDokumen = JenisDokument::find($id);
+
+        if (!$jenisDokumen){
+            return response()->json(['error' => 'Data tidak ditemukan'], 401);
+        }
+
+        $jenisDokumen->delete();
+
+        return response()->json(['status'=>'success'],200);
+    }
 }
