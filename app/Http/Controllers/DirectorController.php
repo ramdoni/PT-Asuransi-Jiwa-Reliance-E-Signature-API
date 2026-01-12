@@ -69,6 +69,14 @@ class DirectorController extends Controller
                         Mail::to($checkSigner->email)->send(new NotificationMail($subject, $message));
                     }
                 } catch (\Exception $e) {}
+
+                SubmissionLog::create([
+                    'submission_id'=> $submission->id,
+                    'status'=> Submission::STATUS_DIREKSI_1,
+                    'title'=> "The document has been signed by the director ".isset($checkSigner->name) ? $checkSigner->name : '',
+                    'email'=> isset($checkSigner->email) ? $checkSigner->email : ''
+                ]);
+                
             }else{
                 $path = $submission->dokumen;
                 $base64 = file_get_contents($path);
@@ -93,7 +101,7 @@ class DirectorController extends Controller
                 if($signer){
                     if(isset($result['success'])){
                         $signer->update([
-                            'file_signer' => $result['file_path']
+                            'file_signer' => $result['file_path'] ?? ''
                         ]);
                     }else{
                         return response()->json([
@@ -110,13 +118,6 @@ class DirectorController extends Controller
                 ]);
             }
         }
-    
-        SubmissionLog::create([
-            'submission_id'=> $submission->id,
-            'status'=> Submission::STATUS_DIREKSI_1,
-            'title'=> "The document has been signed by the director {$checkSigner->name}",
-            'email'=> $checkSigner->email
-        ]);
 
         return response()->json(['status'=>'success'],200);
     }

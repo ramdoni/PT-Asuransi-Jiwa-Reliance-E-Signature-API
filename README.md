@@ -50,3 +50,12 @@ docker run -d --name sign-gateway \
 -e ENV=STAGING registry.xignature.co.id/xignature/public-sign-gateway:2.1.0
 
 docker run -d --name sign-gateway -p 1303:1303 -e API_URL=https://api.xignature.dev -e API_KEY=71645d4293da14a0e8e9098c27b60344be4afc14e42a1bf4967f929f1e4c19f2f8ed3463f4ea1f2228b8ed007bad2e65a438131a86e0105baec99bb082459a89 -e ENV=STAGING registry.xignature.co.id/xignature/public-sign-gateway:2.1.0
+
+# Remove Current Container
+docker rm -f sign-gateway
+
+# Pull New Image
+docker pull registry.xignature.co.id/xignature/public-sign-gateway:2.1.0
+
+# Run Container With New Image
+docker run -d --name sign-gateway -p 1303:1303 -e API_URL=https://api.xignature.co.id -e API_KEY=71645d4293da14a0e8e9098c27b60344be4afc14e42a1bf4967f929f1e4c19f2f8ed3463f4ea1f2228b8ed007bad2e65a438131a86e0105baec99bb082459a89 -e ENV=PROD -e OTEL_SERVICE_NAME=xignature-prod registry.xignature.co.id/xignature/public-sign-gateway:2.1.0

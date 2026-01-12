@@ -24,6 +24,7 @@ $router->options('{any:.*}', function (Request $request) {
 });
 
 $router->get('/', function () use ($router) { return 'ENTIGI System 1.0'; });
+$router->get('/info', function () use ($router) { return 'ENTIGI System 1.0'; });
 
 $router->post('auth/login', 'AuthController@login');
 $router->get('dashboard/send-notification','DashboardController@sendNotification');
