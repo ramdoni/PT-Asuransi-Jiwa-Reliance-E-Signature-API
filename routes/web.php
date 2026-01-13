@@ -54,6 +54,8 @@ $router->group(['middleware' => ['auth.jwt']], function () use ($router) {
 
     $router->get('tujuan-tanda-tangan/index', 'TujuanTandaTanganController@index');
     $router->post('tujuan-tanda-tangan/store', 'TujuanTandaTanganController@store');
+    $router->delete('tujuan-tanda-tangan/{id}/delete', 'TujuanTandaTanganController@delete');
+
 
     $router->get('signatory/index', 'SignatoryController@index');
     $router->post('signatory/store', 'SignatoryController@store');
