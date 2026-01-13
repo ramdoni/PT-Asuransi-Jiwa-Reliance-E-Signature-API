@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 
 class JenisDokumenController extends Controller
 {
-
     public function index()
     {
         $data = JenisDokument::get();
